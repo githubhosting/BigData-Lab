@@ -179,7 +179,6 @@ class reducer
     output.collect(new Text(key), new IntWritable(count));
   }
 }
-
 ```
 
 ### 3. Weather Report
@@ -265,7 +264,6 @@ class reducer
     output.collect(new Text("Min temp at " + key), new DoubleWritable(min));
   }
 }
-
 ```
 
 ## 4. Sales Records
@@ -349,40 +347,35 @@ public class reducer
     output.collect(new Text(key), new IntWritable(sum));
   }
 }
-
 ```
 
 ## 5. Insurance Data
 
-<details>
-    <summary>driver</summary>
-
-    ```java
-    package insurance;
-
-    import java.io.*;
-    import java.util.*;
-    import org.apache.hadoop.fs.Path;
-    import org.apache.hadoop.io.*;
-    import org.apache.hadoop.mapred.*;
-
-    public class driver {
-
-    public static void main(String args[]) throws IOException {
-        JobConf conf = new JobConf(driver.class);
-        conf.setMapperClass(mapper.class);
-        conf.setReducerClass(reducer.class);
-        conf.setOutputKeyClass(Text.class);
-        conf.setOutputValueClass(IntWritable.class);
-        FileInputFormat.addInputPath(conf, new Path(args[0]));
-        FileOutputFormat.setOutputPath(conf, new Path(args[1]));
-        JobClient.runJob(conf);
-    }
-    }
-    ```
-</details>
-
 ```java
+<!-- driver.java -->
+
+package insurance;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class driver {
+
+  public static void main(String args[]) throws IOException {
+    JobConf conf = new JobConf(driver.class);
+    conf.setMapperClass(mapper.class);
+    conf.setReducerClass(reducer.class);
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+    JobClient.runJob(conf);
+  }
+}
+
 <!-- mapper.java -->
 
 package insurance;
@@ -433,5 +426,87 @@ public class reducer
     output.collect(key, new IntWritable(sum));
   }
 }
+```
 
+## 6. Employee Records
+
+```java
+<!-- driver.java -->
+
+package employee;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class driver {
+
+  public static void main(String args[]) throws IOException {
+    JobConf conf = new JobConf(driver.class);
+    conf.setMapperClass(mapper.class);
+    conf.setReducerClass(reducer.class);
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(DoubleWritable.class);
+    FileInputFormat.addInputPath(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+    JobClient.runJob(conf);
+  }
+}
+
+<!-- mapper.java -->
+
+package employee;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+class mapper
+  extends MapReduceBase
+  implements Mapper<LongWritable, Text, Text, DoubleWritable> {
+
+  public void map(
+    LongWritable key,
+    Text value,
+    OutputCollector<Text, DoubleWritable> output,
+    Reporter r
+  ) throws IOException {
+    String[] line = value.toString().split("\\t");
+    double salary = Double.parseDouble(line[8]);
+    output.collect(new Text(line[3]), new DoubleWritable(salary));
+  }
+}
+
+<!-- reducer.java -->
+
+package employee;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+class reducer
+  extends MapReduceBase
+  implements Reducer<Text, DoubleWritable, Text, DoubleWritable> {
+
+  public void reduce(
+    Text key,
+    Iterator<DoubleWritable> value,
+    OutputCollector<Text, DoubleWritable> output,
+    Reporter r
+  ) throws IOException {
+    int count = 0;
+    Double sum = 0.0;
+    while (value.hasNext()) {
+      sum += value.next().get();
+      count += 1;
+    }
+    output.collect(new Text(key + " Average"), new DoubleWritable(sum / count));
+    output.collect(new Text(key + " Count"), new DoubleWritable(count));
+  }
+}
 ```
