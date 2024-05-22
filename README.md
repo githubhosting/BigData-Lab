@@ -1,4 +1,14 @@
-## Odd Even
+## Commands to run the code
+
+```bash
+javac -d . *.java
+echo Main-Class: oddeven.driver > Manifest.txt
+jar -cfm oddeven.jar Manifest.txt oddeven/*.class
+hadoop jar weather.jar oe.txt output
+cat output/*
+```
+
+## 1. Odd Even
 
 ```java
 <!-- driver.java -->
@@ -90,7 +100,7 @@ public class reducer
 
 ```
 
-### Word Count
+### 2. Word Count
 
 ```java
 <!-- driver.java -->
@@ -172,7 +182,7 @@ class reducer
 
 ```
 
-### Weather Report
+### 3. Weather Report
 
 ```java
 <!-- driver.java -->
@@ -253,6 +263,176 @@ class reducer
     }
     output.collect(new Text("Max temp at " + key), new DoubleWritable(max));
     output.collect(new Text("Min temp at " + key), new DoubleWritable(min));
+  }
+}
+
+```
+
+## 4. Sales Records
+
+```java
+<!-- driver.java -->
+
+package sales;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class driver {
+
+  public static void main(String args[]) throws IOException {
+    JobConf conf = new JobConf(driver.class);
+    conf.setMapperClass(mapper.class);
+    conf.setReducerClass(reducer.class);
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+    JobClient.runJob(conf);
+  }
+}
+
+<!-- mapper.java -->
+
+package sales;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class mapper
+  extends MapReduceBase
+  implements Mapper<LongWritable, Text, Text, IntWritable> {
+
+  public void map(
+    LongWritable key,
+    Text value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    String[] line = value.toString().split(",");
+    int price = Integer.parseInt(line[2]);
+    String cardtype = line[3];
+    String Country = line[7];
+    output.collect(new Text("Country " + Country), new IntWritable(price));
+    output.collect(new Text("CardType " + cardtype), new IntWritable(1));
+  }
+}
+
+<!-- reducer.java -->
+
+package sales;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class reducer
+  extends MapReduceBase
+  implements Reducer<Text, IntWritable, Text, IntWritable> {
+
+  public void reduce(
+    Text key,
+    Iterator<IntWritable> value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    int sum = 0;
+    while (value.hasNext()) {
+      sum += value.next().get();
+    }
+    output.collect(new Text(key), new IntWritable(sum));
+  }
+}
+
+```
+
+## 5. Insurance Data
+
+```java
+
+<details>
+    <summary>driver</summary>
+
+    ```java
+    package insurance;
+
+    import java.io.*;
+    import java.util.*;
+    import org.apache.hadoop.fs.Path;
+    import org.apache.hadoop.io.*;
+    import org.apache.hadoop.mapred.*;
+
+    public class driver {
+
+    public static void main(String args[]) throws IOException {
+        JobConf conf = new JobConf(driver.class);
+        conf.setMapperClass(mapper.class);
+        conf.setReducerClass(reducer.class);
+        conf.setOutputKeyClass(Text.class);
+        conf.setOutputValueClass(IntWritable.class);
+        FileInputFormat.addInputPath(conf, new Path(args[0]));
+        FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+        JobClient.runJob(conf);
+    }
+    }
+    ```
+</details>
+
+```java
+<!-- mapper.java -->
+
+package insurance;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class mapper
+  extends MapReduceBase
+  implements Mapper<LongWritable, Text, Text, IntWritable> {
+
+  public void map(
+    LongWritable key,
+    Text value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    String[] line = value.toString().split(",");
+    output.collect(new Text(line[2]), new IntWritable(1));
+  }
+}
+
+<!-- reducer.java -->
+
+package insurance;
+
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class reducer
+  extends MapReduceBase
+  implements Reducer<Text, IntWritable, Text, IntWritable> {
+
+  public void reduce(
+    Text key,
+    Iterator<IntWritable> value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    int sum = 0;
+    while (value.hasNext()) {
+      sum += value.next().get();
+    }
+    output.collect(key, new IntWritable(sum));
   }
 }
 
