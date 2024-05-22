@@ -354,8 +354,6 @@ public class reducer
 
 ## 5. Insurance Data
 
-```java
-
 <details>
     <summary>driver</summary>
 
