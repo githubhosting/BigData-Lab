@@ -500,7 +500,7 @@ class reducer
     Reporter r
   ) throws IOException {
     int count = 0;
-    Double sum = 0.0;
+    double sum = 0.0;
     while (value.hasNext()) {
       sum += value.next().get();
       count += 1;
