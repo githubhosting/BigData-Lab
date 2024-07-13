@@ -8,7 +8,7 @@ hadoop jar weather.jar oe.txt output
 cat output/*
 ```
 
-### 1. Word Count
+## 1. Word Count
 
 ```java
 <!-- driver.java -->
@@ -562,5 +562,52 @@ public class reducer extends MapReduceBase implements Reducer<Text, Text, Text, 
         }
     }
 }
+```
 
+## Commands to run spark code
+
+```bash
+cd spark-3.5.1-bin-hadoop3
+source bash.sh
+spark-shell
+```
+
+then press `ctrl + c` to exit the shell
+
+```bash
+spark-submit file.py input.txt output
+cat output/*
+```
+
+## Commands to run the Pig code
+
+```bash
+pig -x local file.pig
+```
+
+## 11. FILTER and GROUP Students details
+
+```pig
+student_details = LOAD 'student.txt' USING
+PigStorage(',') as (id:int, firstname:chararray, lastname:chararray, age:int, phone:chararray, city:chararray);
+
+filter_data = FILTER student_details by city == 'Chennai';
+STORE filter_data INTO 'filter';
+group_data = GROUP student_details by age;
+STORE group_data INTO 'group';
+```
+
+## 12. JOIN and SORT Customer and Order details
+
+```pig
+customers = LOAD 'customer.txt' USING
+PigStorage(',') as (id:int, name:chararray, age:int, address:chararray, salary:int);
+
+orders = LOAD 'order.txt' USING
+PigStorage(',') as (oid:int, date:chararray, customer_id:int, amount:int);
+
+join_result = JOIN customers BY id, orders BY customer_id;
+STORE join_result INTO 'joinoutput';
+sorting = ORDER join_result by age ASC;
+STORE sorting into 'sortoutput';
 ```
