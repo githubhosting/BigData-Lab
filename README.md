@@ -510,3 +510,96 @@ class reducer
   }
 }
 ```
+
+## 7. Matrix Multiplication
+
+```java
+<!-- driver.java -->
+
+package matrix;
+
+import java.util.*;
+import java.io.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.io.*;
+
+public class driver {
+    public static void main(String args[]) throws IOException {
+        JobConf conf = new JobConf(driver.class);
+        conf.setMapperClass(mapper.class);
+        conf.setReducerClass(reducer.class);
+        conf.setOutputKeyClass(Text.class);
+        conf.setOutputValueClass(Text.class);
+        FileInputFormat.addInputPath(conf, new Path(args[0]));
+        FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+        JobClient.runJob(conf);
+    }
+}
+
+<!-- mapper.java -->
+
+package matrix;
+
+import java.util.*;
+import java.io.*;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.io.*;
+
+class mapper extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+    public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter r) throws IOException {
+        String line[] = value.toString().split(",");
+        Text OutputKey = new Text();
+        Text OutputValue = new Text();
+        if (line[0].equals("A")) {
+            for (int i = 0; i < 3; i++) {
+                OutputKey.set(line[1] + "," + i);
+                OutputValue.set("A," + line[2] + "," + line[3]);
+                output.collect(OutputKey, OutputValue);
+            }
+        } else {
+            for (int i = 0; i < 2; i++) {
+                OutputKey.set(i + "," + line[2]);
+                OutputValue.set("B," + line[1] + "," + line[3]);
+                output.collect(OutputKey, OutputValue);
+            }
+        }
+    }
+}
+
+<!-- reducer.java -->
+
+package matrix;
+
+import java.util.*;
+import java.io.*;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.io.*;
+
+public class reducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
+    public void reduce(Text key, Iterator<Text> value, OutputCollector<Text, Text> output, Reporter r)
+            throws IOException {
+        HashMap<Integer, Float> a = new HashMap<Integer, Float>();
+        HashMap<Integer, Float> b = new HashMap<Integer, Float>();
+        String[] v;
+        while (value.hasNext()) {
+            v = value.next().toString().split(",");
+            if (v[0].equals("A")) {
+                a.put(Integer.parseInt(v[1]), Float.parseFloat(v[2]));
+            } else {
+                b.put(Integer.parseInt(v[1]), Float.parseFloat(v[2]));
+            }
+        }
+        float aij, bij, result = 0.0f;
+        for (int i = 0; i < 5; i++) {
+            aij = a.containsKey(i) ? a.get(i) : 0.0f;
+            bij = b.containsKey(i) ? b.get(i) : 0.0f;
+            result += aij * bij;
+        }
+        if (result != 0.0f) {
+            output.collect(null, new Text(key + "," + Float.toString(result)));
+        }
+    }
+}
+
+```
