@@ -8,13 +8,12 @@ hadoop jar weather.jar oe.txt output
 cat output/*
 ```
 
-## 1. Odd Even
+### 1. Word Count
 
 ```java
 <!-- driver.java -->
 
-package oddeven;
-
+package wordcount;
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.fs.Path;
@@ -22,7 +21,81 @@ import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 
 public class driver {
+  public static void main(String args[]) throws Exception {
+    JobConf conf = new JobConf(driver.class);
+    conf.setMapperClass(mapper.class);
+    conf.setReducerClass(reducer.class);
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+    JobClient.runJob(conf);
+  }
+}
 
+<!-- mapper.java -->
+
+package wordcount;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class mapper
+  extends MapReduceBase
+  implements Mapper<LongWritable, Text, Text, IntWritable> {
+  public void map(
+    LongWritable key,
+    Text value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    String line[] = value.toString().split(" ");
+    for (String a : line) {
+      output.collect(new Text(a), new IntWritable(1));
+    }
+  }
+}
+
+<!-- reducer.java -->
+
+package wordcount;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+class reducer
+  extends MapReduceBase
+  implements Reducer<Text, IntWritable, Text, IntWritable> {
+  public void reduce(
+    Text key,
+    Iterator<IntWritable> value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    int count = 0;
+    while (value.hasNext()) {
+      count += value.next().get();
+    }
+    output.collect(new Text(key), new IntWritable(count));
+  }
+}
+```
+
+## 2. Odd Even
+
+```java
+<!-- driver.java -->
+
+package oddeven;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class driver {
   public static void main(String args[]) throws IOException {
     JobConf conf = new JobConf(driver.class);
     conf.setMapperClass(mapper.class);
@@ -38,7 +111,6 @@ public class driver {
 <!-- mapper.java -->
 
 package oddeven;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -47,7 +119,6 @@ import org.apache.hadoop.mapred.*;
 public class mapper
   extends MapReduceBase
   implements Mapper<LongWritable, Text, Text, IntWritable> {
-
   public void map(
     LongWritable key,
     Text value,
@@ -69,7 +140,6 @@ public class mapper
 <!-- reducer.java -->
 
 package oddeven;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -78,7 +148,6 @@ import org.apache.hadoop.mapred.*;
 public class reducer
   extends MapReduceBase
   implements Reducer<Text, IntWritable, Text, IntWritable> {
-
   public void reduce(
     Text key,
     Iterator<IntWritable> value,
@@ -100,94 +169,12 @@ public class reducer
 
 ```
 
-### 2. Word Count
-
-```java
-<!-- driver.java -->
-
-package wordcount;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-public class driver {
-
-  public static void main(String args[]) throws Exception {
-    JobConf conf = new JobConf(driver.class);
-    conf.setMapperClass(mapper.class);
-    conf.setReducerClass(reducer.class);
-    conf.setOutputKeyClass(Text.class);
-    conf.setOutputValueClass(IntWritable.class);
-    FileInputFormat.addInputPath(conf, new Path(args[0]));
-    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
-    JobClient.runJob(conf);
-  }
-}
-
-<!-- mapper.java -->
-
-package wordcount;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-public class mapper
-  extends MapReduceBase
-  implements Mapper<LongWritable, Text, Text, IntWritable> {
-
-  public void map(
-    LongWritable key,
-    Text value,
-    OutputCollector<Text, IntWritable> output,
-    Reporter r
-  ) throws IOException {
-    String line[] = value.toString().split(" ");
-    for (String a : line) {
-      output.collect(new Text(a), new IntWritable(1));
-    }
-  }
-}
-
-<!-- reducer.java -->
-
-package wordcount;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-class reducer
-  extends MapReduceBase
-  implements Reducer<Text, IntWritable, Text, IntWritable> {
-
-  public void reduce(
-    Text key,
-    Iterator<IntWritable> value,
-    OutputCollector<Text, IntWritable> output,
-    Reporter r
-  ) throws IOException {
-    int count = 0;
-    while (value.hasNext()) {
-      count += value.next().get();
-    }
-    output.collect(new Text(key), new IntWritable(count));
-  }
-}
-```
-
 ### 3. Weather Report
 
 ```java
 <!-- driver.java -->
 
 package weather;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.fs.Path;
@@ -195,7 +182,6 @@ import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 
 public class driver {
-
   public static void main(String args[]) throws IOException {
     JobConf conf = new JobConf(driver.class);
     conf.setMapperClass(mapper.class);
@@ -211,7 +197,6 @@ public class driver {
 <!-- mapper.java -->
 
 package weather;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -220,7 +205,6 @@ import org.apache.hadoop.mapred.*;
 public class mapper
   extends MapReduceBase
   implements Mapper<LongWritable, Text, Text, DoubleWritable> {
-
   public void map(
     LongWritable key,
     Text value,
@@ -237,7 +221,6 @@ public class mapper
 <!-- reducer.java -->
 
 package weather;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -246,7 +229,6 @@ import org.apache.hadoop.mapred.*;
 class reducer
   extends MapReduceBase
   implements Reducer<Text, DoubleWritable, Text, DoubleWritable> {
-
   public void reduce(
     Text key,
     Iterator<DoubleWritable> value,
@@ -266,13 +248,12 @@ class reducer
 }
 ```
 
-## 4. Sales Records
+## 4. Insurance Data
 
 ```java
 <!-- driver.java -->
 
-package sales;
-
+package insurance;
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.fs.Path;
@@ -280,7 +261,79 @@ import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 
 public class driver {
+  public static void main(String args[]) throws IOException {
+    JobConf conf = new JobConf(driver.class);
+    conf.setMapperClass(mapper.class);
+    conf.setReducerClass(reducer.class);
+    conf.setOutputKeyClass(Text.class);
+    conf.setOutputValueClass(IntWritable.class);
+    FileInputFormat.addInputPath(conf, new Path(args[0]));
+    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+    JobClient.runJob(conf);
+  }
+}
 
+<!-- mapper.java -->
+
+package insurance;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class mapper
+  extends MapReduceBase
+  implements Mapper<LongWritable, Text, Text, IntWritable> {
+  public void map(
+    LongWritable key,
+    Text value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    String[] line = value.toString().split(",");
+    output.collect(new Text(line[2]), new IntWritable(1));
+  }
+}
+
+<!-- reducer.java -->
+
+package insurance;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class reducer
+  extends MapReduceBase
+  implements Reducer<Text, IntWritable, Text, IntWritable> {
+  public void reduce(
+    Text key,
+    Iterator<IntWritable> value,
+    OutputCollector<Text, IntWritable> output,
+    Reporter r
+  ) throws IOException {
+    int sum = 0;
+    while (value.hasNext()) {
+      sum += value.next().get();
+    }
+    output.collect(key, new IntWritable(sum));
+  }
+}
+```
+
+## 5. Sales Records
+
+```java
+<!-- driver.java -->
+
+package sales;
+import java.io.*;
+import java.util.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+
+public class driver {
   public static void main(String args[]) throws IOException {
     JobConf conf = new JobConf(driver.class);
     conf.setMapperClass(mapper.class);
@@ -296,7 +349,6 @@ public class driver {
 <!-- mapper.java -->
 
 package sales;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -305,7 +357,6 @@ import org.apache.hadoop.mapred.*;
 public class mapper
   extends MapReduceBase
   implements Mapper<LongWritable, Text, Text, IntWritable> {
-
   public void map(
     LongWritable key,
     Text value,
@@ -324,7 +375,6 @@ public class mapper
 <!-- reducer.java -->
 
 package sales;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -333,7 +383,6 @@ import org.apache.hadoop.mapred.*;
 public class reducer
   extends MapReduceBase
   implements Reducer<Text, IntWritable, Text, IntWritable> {
-
   public void reduce(
     Text key,
     Iterator<IntWritable> value,
@@ -349,92 +398,12 @@ public class reducer
 }
 ```
 
-## 5. Insurance Data
-
-```java
-<!-- driver.java -->
-
-package insurance;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-public class driver {
-
-  public static void main(String args[]) throws IOException {
-    JobConf conf = new JobConf(driver.class);
-    conf.setMapperClass(mapper.class);
-    conf.setReducerClass(reducer.class);
-    conf.setOutputKeyClass(Text.class);
-    conf.setOutputValueClass(IntWritable.class);
-    FileInputFormat.addInputPath(conf, new Path(args[0]));
-    FileOutputFormat.setOutputPath(conf, new Path(args[1]));
-    JobClient.runJob(conf);
-  }
-}
-
-<!-- mapper.java -->
-
-package insurance;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-public class mapper
-  extends MapReduceBase
-  implements Mapper<LongWritable, Text, Text, IntWritable> {
-
-  public void map(
-    LongWritable key,
-    Text value,
-    OutputCollector<Text, IntWritable> output,
-    Reporter r
-  ) throws IOException {
-    String[] line = value.toString().split(",");
-    output.collect(new Text(line[2]), new IntWritable(1));
-  }
-}
-
-<!-- reducer.java -->
-
-package insurance;
-
-import java.io.*;
-import java.util.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-public class reducer
-  extends MapReduceBase
-  implements Reducer<Text, IntWritable, Text, IntWritable> {
-
-  public void reduce(
-    Text key,
-    Iterator<IntWritable> value,
-    OutputCollector<Text, IntWritable> output,
-    Reporter r
-  ) throws IOException {
-    int sum = 0;
-    while (value.hasNext()) {
-      sum += value.next().get();
-    }
-    output.collect(key, new IntWritable(sum));
-  }
-}
-```
-
 ## 6. Employee Records
 
 ```java
 <!-- driver.java -->
 
 package employee;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.fs.Path;
@@ -442,7 +411,6 @@ import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.*;
 
 public class driver {
-
   public static void main(String args[]) throws IOException {
     JobConf conf = new JobConf(driver.class);
     conf.setMapperClass(mapper.class);
@@ -458,7 +426,6 @@ public class driver {
 <!-- mapper.java -->
 
 package employee;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -467,7 +434,6 @@ import org.apache.hadoop.mapred.*;
 class mapper
   extends MapReduceBase
   implements Mapper<LongWritable, Text, Text, DoubleWritable> {
-
   public void map(
     LongWritable key,
     Text value,
@@ -483,7 +449,6 @@ class mapper
 <!-- reducer.java -->
 
 package employee;
-
 import java.io.*;
 import java.util.*;
 import org.apache.hadoop.io.*;
@@ -492,7 +457,6 @@ import org.apache.hadoop.mapred.*;
 class reducer
   extends MapReduceBase
   implements Reducer<Text, DoubleWritable, Text, DoubleWritable> {
-
   public void reduce(
     Text key,
     Iterator<DoubleWritable> value,
@@ -517,7 +481,6 @@ class reducer
 <!-- driver.java -->
 
 package matrix;
-
 import java.util.*;
 import java.io.*;
 import org.apache.hadoop.fs.Path;
@@ -540,7 +503,6 @@ public class driver {
 <!-- mapper.java -->
 
 package matrix;
-
 import java.util.*;
 import java.io.*;
 import org.apache.hadoop.mapred.*;
@@ -570,7 +532,6 @@ class mapper extends MapReduceBase implements Mapper<LongWritable, Text, Text, T
 <!-- reducer.java -->
 
 package matrix;
-
 import java.util.*;
 import java.io.*;
 import org.apache.hadoop.mapred.*;
